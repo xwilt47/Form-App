@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CopilotDiffPersistence">
+    <option name="pendingDiffs">
+      <map>
+        <entry key="/types (snapshot).ts">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="/types (snapshot).ts" />
+              <option name="updatedContent" value="export type InputType =&#10;  | &quot;text&quot;&#10;  | &quot;number&quot;&#10;  | &quot;email&quot;&#10;  | &quot;password&quot;&#10;  | &quot;url&quot;&#10;  | &quot;tel&quot;&#10;  | &quot;date&quot;&#10;  | &quot;textarea&quot;;&#10;&#10;export type StylePreset = &quot;default&quot; | &quot;dark&quot; | &quot;ocean&quot; | &quot;rose&quot; | &quot;forest&quot; | &quot;custom&quot;;&#10;&#10;export interface StyleConfig {&#10;  /** Built-in preset theme name. Use &quot;custom&quot; to rely entirely on your own overrides. */&#10;  preset?: StylePreset;&#10;&#10;  // ── Custom overrides (all optional — only override what you want) ──────────&#10;  /** Page background colour */&#10;  bgColor?: string;&#10;  /** Card / form wrapper background */&#10;  cardColor?: string;&#10;  /** Card border radius (e.g. &quot;12px&quot;) */&#10;  cardRadius?: string;&#10;  /** Card box shadow (e.g. &quot;0 4px 24px rgba(0,0,0,0.1)&quot;) */&#10;  cardShadow?: string;&#10;  /** Primary accent colour – used for progress bar, focus ring, buttons */&#10;  accentColor?: string;&#10;  /** Darker shade of the accent for hover states */&#10;  accentHover?: string;&#10;  /** Heading / title text colour */&#10;  headingColor?: string;&#10;  /** Label text colour */&#10;  labelColor?: string;&#10;  /** Input border colour */&#10;  inputBorder?: string;&#10;  /** Input background colour */&#10;  inputBg?: string;&#10;  /** Input text colour */&#10;  inputColor?: string;&#10;  /** Font family (e.g. &quot;'Georgia', serif&quot;) */&#10;  fontFamily?: string;&#10;  /** Animation speed (e.g. &quot;0.4s&quot;) */&#10;  animationSpeed?: string;&#10;}&#10;&#10;export interface InputConfig {&#10;  name: string;&#10;  type: InputType;&#10;  limit: number;&#10;  required?: boolean;&#10;  placeholder?: string;&#10;}&#10;&#10;export interface PageConfig {&#10;  pageTitle: string;&#10;  inputs: InputConfig[];&#10;}&#10;&#10;export interface FormConfig {&#10;  formTitle: string;&#10;  pages: PageConfig[];&#10;  /** Optional style configuration */&#10;  style?: StyleConfig;&#10;}" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>
