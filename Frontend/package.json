@@ -2,12 +2,12 @@
   "name": "Book App",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
+  "main": "../dist/index.js",
   "scripts": {
-    "build": "tsc"
+    "build": "../node_modules/.bin/tsc"
   },
-  "dependencies": {},
   "devDependencies": {
+    "@types/node": "^25.8.0",
     "typescript": "^5.5.3"
   },
   "private": true
