@@ -4,7 +4,10 @@
   "description": "",
   "main": "../dist/index.js",
   "scripts": {
-    "build": "../node_modules/.bin/tsc"
+    "build":    "tsc",
+    "copy-config": "node -e \"const fs=require('fs');fs.mkdirSync('../dist/config',{recursive:true});fs.copyFileSync('src/config/form-config.json','../dist/config/form-config.json')\"",
+    "generate": "npm run build && npm run copy-config && node ../dist/index.js",
+    "start":    "npm run generate"
   },
   "devDependencies": {
     "@types/node": "^25.8.0",

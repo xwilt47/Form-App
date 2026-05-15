@@ -1,0 +1,90 @@
+{
+  "formTitle": "My Book App Form",
+  "transition": "zoom",
+  "transitionDuration": "0.4s",
+  "transitionDelay": "0s",
+  "style": {
+    "preset": "default",
+    "accentColor": "#4f46e5",
+    "accentHover": "#4338ca",
+    "bgColor": "#f0f4f8",
+    "cardColor": "#ffffff",
+    "headingColor": "#1a1a2e",
+    "labelColor": "#374151",
+    "inputBorder": "#d1d5db",
+    "inputBg": "#ffffff",
+    "inputColor": "#111111",
+    "cardRadius": "12px",
+    "fontFamily": "Segoe UI, sans-serif",
+    "cardShadow": "0 4px 24px rgba(0,0,0,0.10)",
+    "animationSpeed": "0.4s"
+  },
+  "pages": [
+    {
+      "pageTitle": "Personal Info",
+      "inputs": [
+        {
+          "name": "First Name",
+          "type": "text",
+          "limit": 50,
+          "required": true
+        },
+        {
+          "name": "Last Name",
+          "type": "text",
+          "limit": 50,
+          "required": true
+        },
+        {
+          "name": "Age",
+          "type": "number",
+          "limit": 120,
+          "required": false
+        },
+        {
+          "name": "Email",
+          "type": "email",
+          "limit": 100,
+          "required": true
+        }
+      ]
+    },
+    {
+      "pageTitle": "Book Preferences",
+      "inputs": [
+        {
+          "name": "Favourite Genre",
+          "type": "text",
+          "limit": 40
+        },
+        {
+          "name": "Books Per Year",
+          "type": "number",
+          "limit": 999
+        },
+        {
+          "name": "Goodreads URL",
+          "type": "url",
+          "limit": 200
+        }
+      ]
+    },
+    {
+      "pageTitle": "Account Setup",
+      "inputs": [
+        {
+          "name": "Username",
+          "type": "text",
+          "limit": 20,
+          "required": true
+        },
+        {
+          "name": "Password",
+          "type": "password",
+          "limit": 64,
+          "required": true
+        }
+      ]
+    }
+  ]
+}

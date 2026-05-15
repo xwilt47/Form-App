@@ -1,93 +1,94 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.FormGenerator = void 0;
 exports.loadConfig = loadConfig;
 exports.generateHTML = generateHTML;
-const fs = __importStar(require("fs"));
-const path = __importStar(require("path"));
-// ── Load & Validate Config ────────────────────────────────────────────────────
-function loadConfig(filePath) {
-    const absPath = path.resolve(filePath);
-    if (!fs.existsSync(absPath)) {
-        throw new Error(`Config file not found: ${absPath}`);
+const ConfigLoader_1 = require("./ConfigLoader");
+/**
+ * FormGenerator
+ * Single responsibility: transform a validated FormConfig into a complete,
+ * standalone HTML document string.
+ */
+class FormGenerator {
+    /**
+     * Generates a complete HTML document for the given form configuration.
+     * @param config  A validated FormConfig object.
+     * @returns       A self-contained HTML string ready to be written to disk.
+     */
+    generate(config) {
+        var _a, _b, _c;
+        const transition = (_a = config.transition) !== null && _a !== void 0 ? _a : "slide";
+        const transitionDuration = (_b = config.transitionDuration) !== null && _b !== void 0 ? _b : "0.4s";
+        const transitionDelay = (_c = config.transitionDelay) !== null && _c !== void 0 ? _c : "0s";
+        const pages = config.pages
+            .map((page, i) => this._generatePage(page, i, config.pages.length))
+            .join("");
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${config.formTitle}</title>
+  ${this._generateStyles()}
+</head>
+<body>
+  <div class="form-wrapper">
+    <h1>${config.formTitle}</h1>
+    <div class="progress-bar"><div class="progress-fill"></div></div>
+
+    <form id="multi-step-form">
+      <div class="form-pages-track">
+        ${pages}
+      </div>
+    </form>
+
+    <div class="success-message">
+      <h2>✅ Submitted!</h2>
+      <p>Thank you for completing the form.</p>
+    </div>
+  </div>
+  ${this._generateScript(config.pages.length, transition, transitionDuration, transitionDelay)}
+</body>
+</html>`;
     }
-    const raw = fs.readFileSync(absPath, "utf-8");
-    const config = JSON.parse(raw);
-    validateConfig(config);
-    return config;
-}
-function validateConfig(config) {
-    if (!config.formTitle)
-        throw new Error("formTitle is required.");
-    if (!Array.isArray(config.pages) || config.pages.length === 0) {
-        throw new Error("At least one page is required.");
-    }
-    config.pages.forEach((page, pi) => {
-        if (!page.pageTitle)
-            throw new Error(`Page ${pi + 1}: pageTitle is required.`);
-        if (!Array.isArray(page.inputs) || page.inputs.length === 0) {
-            throw new Error(`Page "${page.pageTitle}": at least one input is required.`);
-        }
-        page.inputs.forEach((input, ii) => {
-            if (!input.name)
-                throw new Error(`Page "${page.pageTitle}", input ${ii + 1}: name is required.`);
-            if (!input.type)
-                throw new Error(`Page "${page.pageTitle}", input "${input.name}": type is required.`);
-            if (input.limit == null || input.limit <= 0) {
-                throw new Error(`Page "${page.pageTitle}", input "${input.name}": limit must be a positive number.`);
-            }
-        });
-    });
-}
-// ── HTML Generators ───────────────────────────────────────────────────────────
-function toId(name) {
-    return name
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9-]/g, "");
-}
-function generateInput(input) {
-    var _a;
-    const id = toId(input.name);
-    const placeholder = (_a = input.placeholder) !== null && _a !== void 0 ? _a : input.name;
-    const required = input.required ? "required" : "";
-    const limitAttr = input.type === "number"
-        ? `max="${input.limit}"`
-        : `maxlength="${input.limit}"`;
-    if (input.type === "textarea") {
+    // ── Private: HTML builders ────────────────────────────────────────────────
+    /**
+     * Builds the HTML for a single form page (inputs + navigation buttons).
+     * @private
+     */
+    _generatePage(page, index, total) {
+        const inputs = page.inputs.map(inp => this._generateInput(inp)).join("");
+        const isFirst = index === 0;
+        const isLast = index === total - 1;
         return `
+    <div class="form-page" id="page-${index}" ${isFirst ? "" : 'style="display:none"'}>
+      <h2>${page.pageTitle}</h2>
+      <p class="page-counter">Page ${index + 1} of ${total}</p>
+      ${inputs}
+      <div class="nav-buttons">
+        ${!isFirst ? `<button type="button" class="btn-prev" onclick="navigate(${index}, -1)">← Previous</button>` : ""}
+        ${!isLast ? `<button type="button" class="btn-next" onclick="navigate(${index},  1)">Next →</button>` : ""}
+        ${isLast ? `<button type="submit" class="btn-submit">Submit ✓</button>` : ""}
+      </div>
+    </div>`;
+    }
+    /**
+     * Builds the HTML for a single input field (or textarea).
+     * @private
+     */
+    _generateInput(input) {
+        var _a;
+        const id = this._toId(input.name);
+        const placeholder = (_a = input.placeholder) !== null && _a !== void 0 ? _a : input.name;
+        const required = input.required ? "required" : "";
+        const limitAttr = input.type === "number"
+            ? `max="${input.limit}"`
+            : `maxlength="${input.limit}"`;
+        const hint = input.type === "number"
+            ? `Max value: ${input.limit}`
+            : `Max ${input.limit} characters`;
+        if (input.type === "textarea") {
+            return `
       <div class="form-group">
         <label for="${id}">${input.name}</label>
         <textarea
@@ -99,8 +100,8 @@ function generateInput(input) {
         ></textarea>
         <small class="limit-hint">Max ${input.limit} characters</small>
       </div>`;
-    }
-    return `
+        }
+        return `
       <div class="form-group">
         <label for="${id}">${input.name}</label>
         <input
@@ -111,30 +112,15 @@ function generateInput(input) {
           ${limitAttr}
           ${required}
         />
-        <small class="limit-hint">${input.type === "number"
-        ? `Max value: ${input.limit}`
-        : `Max ${input.limit} characters`}</small>
+        <small class="limit-hint">${hint}</small>
       </div>`;
-}
-function generatePage(page, index, total) {
-    const inputs = page.inputs.map(generateInput).join("");
-    const isFirst = index === 0;
-    const isLast = index === total - 1;
-    return `
-    <div class="form-page" id="page-${index}" ${isFirst ? "" : 'style="display:none"'}>
-      <h2>${page.pageTitle}</h2>
-      <p class="page-counter">Page ${index + 1} of ${total}</p>
-      ${inputs}
-      <div class="nav-buttons">
-        ${!isFirst ? `<button type="button" class="btn-prev" onclick="navigate(${index}, -1)">← Previous</button>` : ""}
-        ${!isLast ? `<button type="button" class="btn-next" onclick="navigate(${index},  1)">Next →</button>` : ""}
-        ${isLast ? `<button type="submit" class="btn-submit">Submit ✓</button>` : ""}
-      </div>
-    </div>`;
-}
-// ── Styles ────────────────────────────────────────────────────────────────────
-function generateStyles() {
-    return `
+    }
+    /**
+     * Returns the full inline <style> block for the generated form.
+     * @private
+     */
+    _generateStyles() {
+        return `
     <style>
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -214,18 +200,11 @@ function generateStyles() {
       .btn-prev { background: #e5e7eb; color: #374151; }
       .btn-prev:hover { background: #d1d5db; }
 
-      .success-message {
-        text-align: center;
-        padding: 2rem;
-        display: none;
-      }
+      .success-message { text-align: center; padding: 2rem; display: none; }
       .success-message h2 { color: #16a34a; font-size: 1.4rem; }
       .success-message p  { color: #555; margin-top: 0.5rem; }
 
-      .form-pages-track {
-        overflow: hidden;
-        position: relative;
-      }
+      .form-pages-track { overflow: hidden; position: relative; }
 
       .form-page {
         animation-duration: 0.4s;
@@ -238,8 +217,8 @@ function generateStyles() {
         to   { transform: translateX(0);    opacity: 1; }
       }
       @keyframes slideOutLeft {
-        from { transform: translateX(0);      opacity: 1; }
-        to   { transform: translateX(-110%);  opacity: 0; }
+        from { transform: translateX(0);     opacity: 1; }
+        to   { transform: translateX(-110%); opacity: 0; }
       }
       @keyframes slideInLeft {
         from { transform: translateX(-110%); opacity: 0; }
@@ -254,13 +233,75 @@ function generateStyles() {
       .slide-out-left  { animation-name: slideOutLeft;  pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
       .slide-in-left   { animation-name: slideInLeft; }
       .slide-out-right { animation-name: slideOutRight; pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
+
+      /* ── Fade ── */
+      @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+      .fade-in  { animation-name: fadeIn; }
+      .fade-out { animation-name: fadeOut; pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
+
+      /* ── Vertical ── */
+      @keyframes slideInDown  { from { transform: translateY(-110%); opacity: 0; } to { transform: translateY(0);    opacity: 1; } }
+      @keyframes slideOutUp   { from { transform: translateY(0);     opacity: 1; } to { transform: translateY(-110%); opacity: 0; } }
+      @keyframes slideInUp    { from { transform: translateY(110%);  opacity: 0; } to { transform: translateY(0);    opacity: 1; } }
+      @keyframes slideOutDown { from { transform: translateY(0);     opacity: 1; } to { transform: translateY(110%);  opacity: 0; } }
+      .slide-in-down  { animation-name: slideInDown; }
+      .slide-out-up   { animation-name: slideOutUp;   pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
+      .slide-in-up    { animation-name: slideInUp; }
+      .slide-out-down { animation-name: slideOutDown; pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
+
+      /* ── Zoom ── */
+      @keyframes zoomIn      { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1);    opacity: 1; } }
+      @keyframes zoomOut     { from { transform: scale(1);    opacity: 1; } to { transform: scale(1.1);  opacity: 0; } }
+      @keyframes zoomInBack  { from { transform: scale(1.1);  opacity: 0; } to { transform: scale(1);    opacity: 1; } }
+      @keyframes zoomOutBack { from { transform: scale(1);    opacity: 1; } to { transform: scale(0.85); opacity: 0; } }
+      .zoom-in       { animation-name: zoomIn; }
+      .zoom-out      { animation-name: zoomOut;     pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
+      .zoom-in-back  { animation-name: zoomInBack; }
+      .zoom-out-back { animation-name: zoomOutBack; pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
     </style>`;
-}
-// ── Client-Side Script ────────────────────────────────────────────────────────
-function generateScript(totalPages) {
-    return `
+    }
+    /**
+     * Returns the inline <script> block for client-side multi-step navigation.
+     * @param totalPages         Total number of pages in the form.
+     * @param transition         Page-transition animation style.
+     * @param transitionDuration CSS time for each in/out animation.
+     * @param transitionDelay    CSS time to wait between out-end and in-start.
+     * @private
+     */
+    _generateScript(totalPages, transition, transitionDuration, transitionDelay) {
+        return `
     <script>
-      const totalPages = ${totalPages};
+      const totalPages         = ${totalPages};
+      const transitionType     = '${transition}';
+      const transitionDuration = '${transitionDuration}';
+      const transitionDelay    = '${transitionDelay}';
+
+      /** Convert a CSS time string ("0.4s" or "400ms") to milliseconds. */
+      function cssTimeToMs(val) {
+        if (!val) return 0;
+        const n = parseFloat(val);
+        return val.trim().endsWith('ms') ? n : n * 1000;
+      }
+
+      function getClasses(direction) {
+        switch (transitionType) {
+          case 'fade':
+            return { out: 'fade-out', in: 'fade-in' };
+          case 'vertical':
+            return direction === 1
+              ? { out: 'slide-out-up',   in: 'slide-in-down' }
+              : { out: 'slide-out-down', in: 'slide-in-up'   };
+          case 'zoom':
+            return direction === 1
+              ? { out: 'zoom-out',      in: 'zoom-in'      }
+              : { out: 'zoom-out-back', in: 'zoom-in-back' };
+          default: // slide
+            return direction === 1
+              ? { out: 'slide-out-left',  in: 'slide-in-right' }
+              : { out: 'slide-out-right', in: 'slide-in-left'  };
+        }
+      }
 
       function updateProgress(pageIndex) {
         const pct = ((pageIndex + 1) / totalPages) * 100;
@@ -269,6 +310,7 @@ function generateScript(totalPages) {
 
       function navigate(currentIndex, direction) {
         const current = document.getElementById('page-' + currentIndex);
+
         if (direction === 1) {
           const inputs = current.querySelectorAll('input[required], textarea[required]');
           for (const input of inputs) {
@@ -281,24 +323,36 @@ function generateScript(totalPages) {
           }
         }
 
-        const next = document.getElementById('page-' + (currentIndex + direction));
-        const outClass = direction === 1 ? 'slide-out-left'  : 'slide-out-right';
-        const inClass  = direction === 1 ? 'slide-in-right'  : 'slide-in-left';
+        const next    = document.getElementById('page-' + (currentIndex + direction));
+        const classes = getClasses(direction);
+        const durMs   = cssTimeToMs(transitionDuration);
+        const delayMs = cssTimeToMs(transitionDelay);
 
-        // Animate out
-        current.classList.add(outClass);
+        // Lock the track height so the form wrapper never resizes mid-transition.
+        const track = current.closest('.form-pages-track');
+        track.style.minHeight = current.offsetHeight + 'px';
 
-        // Prepare and animate in
-        next.style.display = 'block';
-        next.classList.add(inClass);
+        // Apply duration to both pages so it overrides the CSS default.
+        current.style.animationDuration = transitionDuration;
+        next.style.animationDuration    = transitionDuration;
 
+        // Animate the current page out.
+        current.classList.add(classes.out);
+
+        // After the out-animation finishes, wait transitionDelay, then animate in.
         current.addEventListener('animationend', () => {
           current.style.display = 'none';
-          current.classList.remove(outClass);
-        }, { once: true });
+          current.classList.remove(classes.out);
 
-        next.addEventListener('animationend', () => {
-          next.classList.remove(inClass);
+          setTimeout(() => {
+            next.style.display = 'block';
+            next.classList.add(classes.in);
+            next.addEventListener('animationend', () => {
+              next.classList.remove(classes.in);
+              // Update lock to the incoming page's natural height.
+              track.style.minHeight = next.offsetHeight + 'px';
+            }, { once: true });
+          }, delayMs);
         }, { once: true });
 
         updateProgress(currentIndex + direction);
@@ -308,7 +362,7 @@ function generateScript(totalPages) {
       document.getElementById('multi-step-form').addEventListener('submit', function(e) {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData.entries());
+        const data     = Object.fromEntries(formData.entries());
         console.log('Form submitted:', data);
         document.querySelector('.form-page:not([style*="none"])').style.display = 'none';
         document.querySelector('.progress-bar').style.display = 'none';
@@ -316,38 +370,28 @@ function generateScript(totalPages) {
       });
 
       updateProgress(0);
-    </script>`;
+    <\/script>`;
+    }
+    // ── Private: utilities ────────────────────────────────────────────────────
+    /**
+     * Converts a human-readable field name to a safe HTML id / name attribute.
+     * @private
+     */
+    _toId(name) {
+        return name
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[^a-z0-9-]/g, "");
+    }
 }
-// ── Main Export ───────────────────────────────────────────────────────────────
+exports.FormGenerator = FormGenerator;
+// ── Backward-compatible function exports ──────────────────────────────────────
+// index.ts (and any other callers) may import these directly without changes.
+/** @deprecated Use `ConfigLoader.load(filePath)` directly. */
+function loadConfig(filePath) {
+    return ConfigLoader_1.ConfigLoader.load(filePath);
+}
+/** @deprecated Use `new FormGenerator().generate(config)` directly. */
 function generateHTML(config) {
-    const pages = config.pages
-        .map((page, i) => generatePage(page, i, config.pages.length))
-        .join("");
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${config.formTitle}</title>
-  ${generateStyles()}
-</head>
-<body>
-  <div class="form-wrapper">
-    <h1>${config.formTitle}</h1>
-    <div class="progress-bar"><div class="progress-fill"></div></div>
-
-    <form id="multi-step-form">
-      <div class="form-pages-track">
-        ${pages}
-      </div>
-    </form>
-
-    <div class="success-message">
-      <h2>✅ Submitted!</h2>
-      <p>Thank you for completing the form.</p>
-    </div>
-  </div>
-  ${generateScript(config.pages.length)}
-</body>
-</html>`;
+    return new FormGenerator().generate(config);
 }

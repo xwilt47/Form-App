@@ -84,18 +84,11 @@
       .btn-prev { background: #e5e7eb; color: #374151; }
       .btn-prev:hover { background: #d1d5db; }
 
-      .success-message {
-        text-align: center;
-        padding: 2rem;
-        display: none;
-      }
+      .success-message { text-align: center; padding: 2rem; display: none; }
       .success-message h2 { color: #16a34a; font-size: 1.4rem; }
       .success-message p  { color: #555; margin-top: 0.5rem; }
 
-      .form-pages-track {
-        overflow: hidden;
-        position: relative;
-      }
+      .form-pages-track { overflow: hidden; position: relative; }
 
       .form-page {
         animation-duration: 0.4s;
@@ -108,8 +101,8 @@
         to   { transform: translateX(0);    opacity: 1; }
       }
       @keyframes slideOutLeft {
-        from { transform: translateX(0);      opacity: 1; }
-        to   { transform: translateX(-110%);  opacity: 0; }
+        from { transform: translateX(0);     opacity: 1; }
+        to   { transform: translateX(-110%); opacity: 0; }
       }
       @keyframes slideInLeft {
         from { transform: translateX(-110%); opacity: 0; }
@@ -124,6 +117,32 @@
       .slide-out-left  { animation-name: slideOutLeft;  pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
       .slide-in-left   { animation-name: slideInLeft; }
       .slide-out-right { animation-name: slideOutRight; pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
+
+      /* ── Fade ── */
+      @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+      .fade-in  { animation-name: fadeIn; }
+      .fade-out { animation-name: fadeOut; pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
+
+      /* ── Vertical ── */
+      @keyframes slideInDown  { from { transform: translateY(-110%); opacity: 0; } to { transform: translateY(0);    opacity: 1; } }
+      @keyframes slideOutUp   { from { transform: translateY(0);     opacity: 1; } to { transform: translateY(-110%); opacity: 0; } }
+      @keyframes slideInUp    { from { transform: translateY(110%);  opacity: 0; } to { transform: translateY(0);    opacity: 1; } }
+      @keyframes slideOutDown { from { transform: translateY(0);     opacity: 1; } to { transform: translateY(110%);  opacity: 0; } }
+      .slide-in-down  { animation-name: slideInDown; }
+      .slide-out-up   { animation-name: slideOutUp;   pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
+      .slide-in-up    { animation-name: slideInUp; }
+      .slide-out-down { animation-name: slideOutDown; pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
+
+      /* ── Zoom ── */
+      @keyframes zoomIn      { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1);    opacity: 1; } }
+      @keyframes zoomOut     { from { transform: scale(1);    opacity: 1; } to { transform: scale(1.1);  opacity: 0; } }
+      @keyframes zoomInBack  { from { transform: scale(1.1);  opacity: 0; } to { transform: scale(1);    opacity: 1; } }
+      @keyframes zoomOutBack { from { transform: scale(1);    opacity: 1; } to { transform: scale(0.85); opacity: 0; } }
+      .zoom-in       { animation-name: zoomIn; }
+      .zoom-out      { animation-name: zoomOut;     pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
+      .zoom-in-back  { animation-name: zoomInBack; }
+      .zoom-out-back { animation-name: zoomOutBack; pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
     </style>
 </head>
 <body>
@@ -282,7 +301,36 @@
   </div>
   
     <script>
-      const totalPages = 3;
+      const totalPages         = 3;
+      const transitionType     = 'zoom';
+      const transitionDuration = '0.4s';
+      const transitionDelay    = '0s';
+
+      /** Convert a CSS time string ("0.4s" or "400ms") to milliseconds. */
+      function cssTimeToMs(val) {
+        if (!val) return 0;
+        const n = parseFloat(val);
+        return val.trim().endsWith('ms') ? n : n * 1000;
+      }
+
+      function getClasses(direction) {
+        switch (transitionType) {
+          case 'fade':
+            return { out: 'fade-out', in: 'fade-in' };
+          case 'vertical':
+            return direction === 1
+              ? { out: 'slide-out-up',   in: 'slide-in-down' }
+              : { out: 'slide-out-down', in: 'slide-in-up'   };
+          case 'zoom':
+            return direction === 1
+              ? { out: 'zoom-out',      in: 'zoom-in'      }
+              : { out: 'zoom-out-back', in: 'zoom-in-back' };
+          default: // slide
+            return direction === 1
+              ? { out: 'slide-out-left',  in: 'slide-in-right' }
+              : { out: 'slide-out-right', in: 'slide-in-left'  };
+        }
+      }
 
       function updateProgress(pageIndex) {
         const pct = ((pageIndex + 1) / totalPages) * 100;
@@ -291,6 +339,7 @@
 
       function navigate(currentIndex, direction) {
         const current = document.getElementById('page-' + currentIndex);
+
         if (direction === 1) {
           const inputs = current.querySelectorAll('input[required], textarea[required]');
           for (const input of inputs) {
@@ -303,24 +352,36 @@
           }
         }
 
-        const next = document.getElementById('page-' + (currentIndex + direction));
-        const outClass = direction === 1 ? 'slide-out-left'  : 'slide-out-right';
-        const inClass  = direction === 1 ? 'slide-in-right'  : 'slide-in-left';
+        const next    = document.getElementById('page-' + (currentIndex + direction));
+        const classes = getClasses(direction);
+        const durMs   = cssTimeToMs(transitionDuration);
+        const delayMs = cssTimeToMs(transitionDelay);
 
-        // Animate out
-        current.classList.add(outClass);
+        // Lock the track height so the form wrapper never resizes mid-transition.
+        const track = current.closest('.form-pages-track');
+        track.style.minHeight = current.offsetHeight + 'px';
 
-        // Prepare and animate in
-        next.style.display = 'block';
-        next.classList.add(inClass);
+        // Apply duration to both pages so it overrides the CSS default.
+        current.style.animationDuration = transitionDuration;
+        next.style.animationDuration    = transitionDuration;
 
+        // Animate the current page out.
+        current.classList.add(classes.out);
+
+        // After the out-animation finishes, wait transitionDelay, then animate in.
         current.addEventListener('animationend', () => {
           current.style.display = 'none';
-          current.classList.remove(outClass);
-        }, { once: true });
+          current.classList.remove(classes.out);
 
-        next.addEventListener('animationend', () => {
-          next.classList.remove(inClass);
+          setTimeout(() => {
+            next.style.display = 'block';
+            next.classList.add(classes.in);
+            next.addEventListener('animationend', () => {
+              next.classList.remove(classes.in);
+              // Update lock to the incoming page's natural height.
+              track.style.minHeight = next.offsetHeight + 'px';
+            }, { once: true });
+          }, delayMs);
         }, { once: true });
 
         updateProgress(currentIndex + direction);
@@ -330,7 +391,7 @@
       document.getElementById('multi-step-form').addEventListener('submit', function(e) {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData.entries());
+        const data     = Object.fromEntries(formData.entries());
         console.log('Form submitted:', data);
         document.querySelector('.form-page:not([style*="none"])').style.display = 'none';
         document.querySelector('.progress-bar').style.display = 'none';

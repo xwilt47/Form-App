@@ -35,19 +35,20 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
+const ConfigLoader_1 = require("./ConfigLoader");
 const formGenerator_1 = require("./formGenerator");
-const CONFIG_PATH = path.resolve(__dirname, "../form-config.json");
-const OUTPUT_PATH = path.resolve(__dirname, "../output/form.html");
+const CONFIG_PATH = path.resolve(__dirname, "config/form-config.json");
+const OUTPUT_PATH = path.resolve(__dirname, "../Frontend/output/form.html");
 function main() {
     console.log("📖 Loading form config...");
-    const config = (0, formGenerator_1.loadConfig)(CONFIG_PATH);
+    const config = ConfigLoader_1.ConfigLoader.load(CONFIG_PATH);
     console.log(`✅ Config loaded: "${config.formTitle}"`);
     console.log(`   Pages   : ${config.pages.length}`);
     config.pages.forEach((p, i) => {
         console.log(`   Page ${i + 1} : "${p.pageTitle}" — ${p.inputs.length} input(s)`);
     });
     console.log("\n⚙️  Generating HTML...");
-    const html = (0, formGenerator_1.generateHTML)(config);
+    const html = new formGenerator_1.FormGenerator().generate(config);
     const outDir = path.dirname(OUTPUT_PATH);
     if (!fs.existsSync(outDir))
         fs.mkdirSync(outDir, { recursive: true });

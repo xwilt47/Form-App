@@ -1,13 +1,14 @@
 import * as fs from "fs";
 import * as path from "path";
-import { loadConfig, generateHTML } from "./formGenerator";
+import { ConfigLoader } from "./ConfigLoader";
+import { FormGenerator } from "./formGenerator";
 
-const CONFIG_PATH = path.resolve(__dirname, "../form-config.json");
-const OUTPUT_PATH = path.resolve(__dirname, "../output/form.html");
+const CONFIG_PATH = path.resolve(__dirname, "config/form-config.json");
+const OUTPUT_PATH = path.resolve(__dirname, "../Frontend/output/form.html");
 
 function main(): void {
   console.log("📖 Loading form config...");
-  const config = loadConfig(CONFIG_PATH);
+  const config = ConfigLoader.load(CONFIG_PATH);
 
   console.log(`✅ Config loaded: "${config.formTitle}"`);
   console.log(`   Pages   : ${config.pages.length}`);
@@ -16,7 +17,7 @@ function main(): void {
   });
 
   console.log("\n⚙️  Generating HTML...");
-  const html = generateHTML(config);
+  const html = new FormGenerator().generate(config);
 
   const outDir = path.dirname(OUTPUT_PATH);
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
