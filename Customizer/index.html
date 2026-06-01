@@ -97,7 +97,7 @@
     <div class="editor-tab" id="etab-pages">
       <p class="tab-heading">Pages</p>
       <div id="pages-list"></div>
-      <button class="add-btn" onclick="addPage()">＋ Add Page</button>
+      <button class="add-btn" id="add-page-btn">＋ Add Page</button>
     </div>
 
   </div>
@@ -124,10 +124,14 @@
 <!-- Toast -->
 <div id="toast"></div>
 
-<script src="js/constants.js"></script>
+<!-- ── Scripts: load in dependency order ── -->
+<script src="js/shared/AppConstants.js"></script>
 <script src="js/ColorUtils.js"></script>
-<script src="js/FormGenerator.js"></script>
-<script src="js/FormCustomizerApp.js"></script>
+<script src="js/services/FormGenerator.js"></script>
+<script src="js/models/ConfigModel.js"></script>
+<script src="js/views/EditorView.js"></script>
+<script src="js/views/PreviewView.js"></script>
+<script src="js/controllers/AppController.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

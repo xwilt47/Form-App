@@ -309,10 +309,31 @@ select option { background: #1a1d27; }
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 0.65rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+/* Top row: Name | Type | Limit | Req | × */
+.input-row-top {
   display: grid;
   grid-template-columns: 1fr 100px 70px 40px 32px;
   gap: 0.5rem;
   align-items: center;
+}
+/* Bottom row: Placeholder (full width) */
+.input-row-bottom {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.input-row-bottom .irow-ph-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .input-row input, .input-row select {
   background: var(--bg);

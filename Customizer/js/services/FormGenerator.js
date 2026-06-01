@@ -1,31 +1,31 @@
 /**
- * FormGenerator.js
- * Responsible for generating the standalone preview form HTML from a config object.
+ * services/FormGenerator.js
+ * ──────────────────────────
+ * Service class responsible for generating the standalone preview-form HTML
+ * from a config object.  Pure input → output; no DOM access, no state.
+ *
+ * Consumed by: AppController
  */
-
 class FormGenerator {
   /**
    * Generates a full standalone HTML document string for the given config.
-   * @param {object} cfg  - The form configuration object.
-   * @returns {string}    - Complete HTML document.
+   * @param   {object} cfg  - The form configuration object.
+   * @returns {string}      - Complete HTML document.
    */
   generate(cfg) {
-    const t           = cfg.style || {};
+    const t                  = cfg.style            || {};
     const transition         = cfg.transition         || 'slide';
     const transitionDuration = cfg.transitionDuration || '0.4s';
     const transitionDelay    = cfg.transitionDelay    || '0s';
-    const focusRgb    = ColorUtils.hexToRgb(t.accentColor);
-    const focusShadow = focusRgb
+    const focusRgb           = ColorUtils.hexToRgb(t.accentColor);
+    const focusShadow        = focusRgb
       ? `0 0 0 3px rgba(${focusRgb},0.18)`
       : '0 0 0 3px rgba(79,70,229,0.1)';
-    const total = cfg.pages.length;
-
-    const pagesHTML = cfg.pages.map((page, i) => this._buildPage(page, i, total, t)).join('');
+    const total              = cfg.pages.length;
+    const pagesHTML          = cfg.pages.map((page, i) => this._buildPage(page, i, total)).join('');
 
     return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
-  <style>
-    ${this._buildStyles(t, focusShadow)}
-  </style>
+  <style>${this._buildStyles(t, focusShadow)}</style>
   </head><body>
   <div class="form-wrapper">
     <h1>${cfg.formTitle || 'My Form'}</h1>
@@ -33,7 +33,10 @@ class FormGenerator {
     <form id="multi-step-form">
       <div class="form-pages-track">${pagesHTML}</div>
     </form>
-    <div class="success-message"><h2>✅ Submitted!</h2><p>Thank you for completing the form.</p></div>
+    <div class="success-message">
+      <h2>✅ Submitted!</h2>
+      <p>Thank you for completing the form.</p>
+    </div>
   </div>
   ${this._buildScript(total, transition, transitionDuration, transitionDelay)}
 </body></html>`;
@@ -45,12 +48,12 @@ class FormGenerator {
    * Builds the HTML for a single form page.
    * @private
    */
-  _buildPage(page, index, total, styleTokens) {
-    const isFirst   = index === 0;
-    const isLast    = index === total - 1;
+  _buildPage(page, index, total) {
+    const isFirst    = index === 0;
+    const isLast     = index === total - 1;
     const inputsHTML = page.inputs.map(inp => this._buildInput(inp)).join('');
 
-    return `<div class="form-page" id="page-${index}" ${isFirst ? '' : 'style="display:none"'}>
+    return `<div class="form-page" id="page-${index}"${isFirst ? '' : ' style="display:none"'}>
       <h2>${page.pageTitle}</h2>
       <p class="page-counter">Page ${index + 1} of ${total}</p>
       ${inputsHTML}
@@ -67,24 +70,23 @@ class FormGenerator {
    * @private
    */
   _buildInput(inp) {
-    const id    = (inp.name || 'field').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    const ph    = inp.placeholder || inp.name;
-    const req   = inp.required ? 'required' : '';
-    const limit = inp.type === 'number' ? `max="${inp.limit}"` : `maxlength="${inp.limit}"`;
-    const hint  = inp.type === 'number'
-      ? `Max value: ${inp.limit}`
-      : `Max ${inp.limit} characters`;
+    const id        = (inp.name || 'field').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const labelText = inp.label || inp.name;
+    const ph        = inp.placeholder || labelText;
+    const req       = inp.required ? 'required' : '';
+    const limit     = inp.type === 'number' ? `max="${inp.limit}"` : `maxlength="${inp.limit}"`;
+    const hint      = inp.type === 'number' ? `Max value: ${inp.limit}` : `Max ${inp.limit} characters`;
 
     if (inp.type === 'textarea') {
       return `<div class="form-group">
-        <label for="${id}">${inp.name}</label>
+        <label for="${id}">${labelText}</label>
         <textarea id="${id}" name="${id}" placeholder="${ph}" maxlength="${inp.limit}" ${req}></textarea>
         <small class="limit-hint">Max ${inp.limit} chars</small>
       </div>`;
     }
 
     return `<div class="form-group">
-      <label for="${id}">${inp.name}</label>
+      <label for="${id}">${labelText}</label>
       <input type="${inp.type}" id="${id}" name="${id}" placeholder="${ph}" ${limit} ${req} />
       <small class="limit-hint">${hint}</small>
     </div>`;
@@ -97,31 +99,31 @@ class FormGenerator {
   _buildStyles(t, focusShadow) {
     return `
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:${t.fontFamily || "'Segoe UI',sans-serif"};background:${t.bgColor || '#f0f4f8'};display:flex;justify-content:center;align-items:center;min-height:100vh;padding:2rem}
-    .form-wrapper{background:${t.cardColor || '#fff'};border-radius:${t.cardRadius || '12px'};box-shadow:${t.cardShadow || '0 4px 24px rgba(0,0,0,.1)'};padding:2.5rem;width:100%;max-width:520px}
-    h1{font-size:1.6rem;margin-bottom:1.5rem;color:${t.headingColor || '#1a1a2e'};text-align:center}
-    h2{font-size:1.2rem;margin-bottom:.25rem;color:${t.headingColor || '#1a1a2e'}}
+    body{font-family:${t.fontFamily||"'Segoe UI',sans-serif"};background:${t.bgColor||'#f0f4f8'};display:flex;justify-content:center;align-items:center;min-height:100vh;padding:2rem}
+    .form-wrapper{background:${t.cardColor||'#fff'};border-radius:${t.cardRadius||'12px'};box-shadow:${t.cardShadow||'0 4px 24px rgba(0,0,0,.1)'};padding:2.5rem;width:100%;max-width:520px}
+    h1{font-size:1.6rem;margin-bottom:1.5rem;color:${t.headingColor||'#1a1a2e'};text-align:center}
+    h2{font-size:1.2rem;margin-bottom:.25rem;color:${t.headingColor||'#1a1a2e'}}
     .page-counter{font-size:.8rem;color:#888;margin-bottom:1.5rem}
     .progress-bar{width:100%;height:6px;background:#e2e8f0;border-radius:3px;margin-bottom:1.5rem;overflow:hidden}
-    .progress-fill{height:100%;background:${t.accentColor || '#4f46e5'};border-radius:3px;transition:width .3s ease}
+    .progress-fill{height:100%;background:${t.accentColor||'#4f46e5'};border-radius:3px;transition:width .3s ease}
     .form-group{margin-bottom:1.25rem}
-    label{display:block;font-size:.85rem;font-weight:600;color:${t.labelColor || '#374151'};margin-bottom:.35rem}
-    input,textarea,select{width:100%;padding:.6rem .85rem;border:1.5px solid ${t.inputBorder || '#d1d5db'};border-radius:7px;font-size:.95rem;transition:border-color .2s;outline:none;color:${t.inputColor || '#111'};background:${t.inputBg || '#fff'}}
-    input:focus,textarea:focus{border-color:${t.accentColor || '#4f46e5'};box-shadow:${focusShadow}}
+    label{display:block;font-size:.85rem;font-weight:600;color:${t.labelColor||'#374151'};margin-bottom:.35rem}
+    input,textarea,select{width:100%;padding:.6rem .85rem;border:1.5px solid ${t.inputBorder||'#d1d5db'};border-radius:7px;font-size:.95rem;transition:border-color .2s;outline:none;color:${t.inputColor||'#111'};background:${t.inputBg||'#fff'}}
+    input:focus,textarea:focus{border-color:${t.accentColor||'#4f46e5'};box-shadow:${focusShadow}}
     textarea{resize:vertical;min-height:90px}
     .limit-hint{font-size:.75rem;color:#9ca3af;margin-top:.25rem;display:block}
     .nav-buttons{display:flex;justify-content:space-between;margin-top:1.75rem;gap:.75rem}
     button{flex:1;padding:.65rem 1.25rem;border:none;border-radius:7px;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .2s,transform .1s}
     button:active{transform:scale(.98)}
-    .btn-next,.btn-submit{background:${t.accentColor || '#4f46e5'};color:#fff}
-    .btn-next:hover,.btn-submit:hover{background:${t.accentHover || '#4338ca'}}
+    .btn-next,.btn-submit{background:${t.accentColor||'#4f46e5'};color:#fff}
+    .btn-next:hover,.btn-submit:hover{background:${t.accentHover||'#4338ca'}}
     .btn-prev{background:#e5e7eb;color:#374151}
     .btn-prev:hover{background:#d1d5db}
     .success-message{text-align:center;padding:2rem;display:none}
     .success-message h2{color:#16a34a;font-size:1.4rem}
     .success-message p{color:#555;margin-top:.5rem}
     .form-pages-track{overflow:hidden;position:relative}
-    .form-page{animation-duration:${t.animationSpeed || '0.4s'};animation-fill-mode:both;animation-timing-function:cubic-bezier(.4,0,.2,1)}
+    .form-page{animation-duration:${t.animationSpeed||'0.4s'};animation-fill-mode:both;animation-timing-function:cubic-bezier(.4,0,.2,1)}
     @keyframes slideInRight{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
     @keyframes slideOutLeft{from{transform:translateX(0);opacity:1}to{transform:translateX(-110%);opacity:0}}
     @keyframes slideInLeft{from{transform:translateX(-110%);opacity:0}to{transform:translateX(0);opacity:1}}
@@ -153,11 +155,11 @@ class FormGenerator {
   }
 
   /**
-   * Builds the client-side navigation script.
+   * Builds the client-side navigation <script> block.
    * @param {number} totalPages
    * @param {string} transition         'slide' | 'fade' | 'vertical' | 'zoom'
-   * @param {string} transitionDuration CSS time for each in/out animation (e.g. "0.4s")
-   * @param {string} transitionDelay    CSS time to pause between out-end and in-start (e.g. "0s")
+   * @param {string} transitionDuration CSS time string (e.g. "0.4s")
+   * @param {string} transitionDelay    CSS time string (e.g. "0s")
    * @private
    */
   _buildScript(totalPages, transition, transitionDuration, transitionDelay) {
@@ -167,11 +169,7 @@ class FormGenerator {
     const transitionDuration = '${transitionDuration}';
     const transitionDelay    = '${transitionDelay}';
 
-    function cssTimeToMs(val) {
-      if (!val) return 0;
-      const n = parseFloat(val);
-      return val.trim().endsWith('ms') ? n : n * 1000;
-    }
+    function cssTimeToMs(val){if(!val)return 0;const n=parseFloat(val);return val.trim().endsWith('ms')?n:n*1000;}
     function getClasses(dir){
       switch(transitionType){
         case'fade':    return{out:'fade-out',in:'fade-in'};
@@ -180,7 +178,7 @@ class FormGenerator {
         default:       return dir===1?{out:'slide-out-left',in:'slide-in-right'}:{out:'slide-out-right',in:'slide-in-left'};
       }
     }
-    function updateProgress(i){document.querySelector('.progress-fill').style.width=((i+1)/totalPages*100)+'%'}
+    function updateProgress(i){document.querySelector('.progress-fill').style.width=((i+1)/totalPages*100)+'%';}
     function navigate(ci,dir){
       const cur=document.getElementById('page-'+ci);
       if(dir===1){const ins=cur.querySelectorAll('input[required],textarea[required]');for(const i of ins){if(!i.value.trim()){i.focus();i.style.borderColor='#ef4444';setTimeout(()=>i.style.borderColor='',1500);return;}}}

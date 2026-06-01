@@ -1,6 +1,8 @@
 /**
- * constants.js
+ * shared/AppConstants.js
+ * ───────────────────────
  * Shared immutable data used across the Customizer.
+ * Consumed by: ConfigModel, EditorView, AppController
  */
 
 const PRESETS = Object.freeze({
@@ -21,16 +23,18 @@ const PRESET_SWATCHES = Object.freeze({
   custom:  { bg:'#888',    card:'#ffffff' },
 });
 
-const INPUT_TYPES = Object.freeze(['text', 'number', 'email', 'password', 'url', 'tel', 'date', 'textarea']);
+const INPUT_TYPES = Object.freeze([
+  'text', 'number', 'email', 'password', 'url', 'tel', 'date', 'textarea',
+]);
 
 const DEFAULT_CONFIG = Object.freeze({
   formTitle          : 'My Book App Form',
   transition         : 'slide',
   transitionDuration : '0.4s',
   transitionDelay    : '0s',
-  style: { preset: 'default', ...PRESETS.default },
-  pages: [
-    { pageTitle: 'Page 1', inputs: [{ name: 'Field 1', type: 'text', limit: 100, required: false }] }
+  style : { preset: 'default', ...PRESETS.default },
+  pages : [
+    { pageTitle: 'Page 1', inputs: [{ name: 'Field 1', label: '', type: 'text', limit: 100, placeholder: '', required: false }] },
   ],
 });
 

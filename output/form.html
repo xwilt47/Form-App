@@ -1,126 +1,10 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.FormGenerator = void 0;
-exports.loadConfig = loadConfig;
-exports.generateHTML = generateHTML;
-const ConfigLoader_1 = require("./ConfigLoader");
-/**
- * FormGenerator
- * Single responsibility: transform a validated FormConfig into a complete,
- * standalone HTML document string.
- */
-class FormGenerator {
-    /**
-     * Generates a complete HTML document for the given form configuration.
-     * @param config  A validated FormConfig object.
-     * @returns       A self-contained HTML string ready to be written to disk.
-     */
-    generate(config) {
-        var _a, _b, _c;
-        const transition = (_a = config.transition) !== null && _a !== void 0 ? _a : "slide";
-        const transitionDuration = (_b = config.transitionDuration) !== null && _b !== void 0 ? _b : "0.4s";
-        const transitionDelay = (_c = config.transitionDelay) !== null && _c !== void 0 ? _c : "0s";
-        const pages = config.pages
-            .map((page, i) => this._generatePage(page, i, config.pages.length))
-            .join("");
-        return `<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${config.formTitle}</title>
-  ${this._generateStyles()}
-</head>
-<body>
-  <div class="form-wrapper">
-    <h1>${config.formTitle}</h1>
-    <div class="progress-bar"><div class="progress-fill"></div></div>
-
-    <form id="multi-step-form">
-      <div class="form-pages-track">
-        ${pages}
-      </div>
-    </form>
-
-    <div class="success-message">
-      <h2>✅ Submitted!</h2>
-      <p>Thank you for completing the form.</p>
-    </div>
-  </div>
-  ${this._generateScript(config.pages.length, transition, transitionDuration, transitionDelay)}
-</body>
-</html>`;
-    }
-    // ── Private: HTML builders ────────────────────────────────────────────────
-    /**
-     * Builds the HTML for a single form page (inputs + navigation buttons).
-     * @private
-     */
-    _generatePage(page, index, total) {
-        const inputs = page.inputs.map(inp => this._generateInput(inp)).join("");
-        const isFirst = index === 0;
-        const isLast = index === total - 1;
-        return `
-    <div class="form-page" id="page-${index}" ${isFirst ? "" : 'style="display:none"'}>
-      <h2>${page.pageTitle}</h2>
-      <p class="page-counter">Page ${index + 1} of ${total}</p>
-      ${inputs}
-      <div class="nav-buttons">
-        ${!isFirst ? `<button type="button" class="btn-prev" onclick="navigate(${index}, -1)">← Previous</button>` : ""}
-        ${!isLast ? `<button type="button" class="btn-next" onclick="navigate(${index},  1)">Next →</button>` : ""}
-        ${isLast ? `<button type="submit" class="btn-submit">Submit ✓</button>` : ""}
-      </div>
-    </div>`;
-    }
-    /**
-     * Builds the HTML for a single input field (or textarea).
-     * @private
-     */
-    _generateInput(input) {
-        var _a;
-        const id = this._toId(input.name);
-        const placeholder = (_a = input.placeholder) !== null && _a !== void 0 ? _a : input.name;
-        const required = input.required ? "required" : "";
-        const limitAttr = input.type === "number"
-            ? `max="${input.limit}"`
-            : `maxlength="${input.limit}"`;
-        const hint = input.type === "number"
-            ? `Max value: ${input.limit}`
-            : `Max ${input.limit} characters`;
-        if (input.type === "textarea") {
-            return `
-      <div class="form-group">
-        <label for="${id}">${input.name}</label>
-        <textarea
-          id="${id}"
-          name="${id}"
-          placeholder="${placeholder}"
-          maxlength="${input.limit}"
-          ${required}
-        ></textarea>
-        <small class="limit-hint">Max ${input.limit} characters</small>
-      </div>`;
-        }
-        return `
-      <div class="form-group">
-        <label for="${id}">${input.name}</label>
-        <input
-          type="${input.type}"
-          id="${id}"
-          name="${id}"
-          placeholder="${placeholder}"
-          ${limitAttr}
-          ${required}
-        />
-        <small class="limit-hint">${hint}</small>
-      </div>`;
-    }
-    /**
-     * Returns the full inline <style> block for the generated form.
-     * @private
-     */
-    _generateStyles() {
-        return `
+  <title>My Book App Form</title>
+  
     <style>
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -259,23 +143,168 @@ class FormGenerator {
       .zoom-out      { animation-name: zoomOut;     pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
       .zoom-in-back  { animation-name: zoomInBack; }
       .zoom-out-back { animation-name: zoomOutBack; pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
-    </style>`;
-    }
-    /**
-     * Returns the inline <script> block for client-side multi-step navigation.
-     * @param totalPages         Total number of pages in the form.
-     * @param transition         Page-transition animation style.
-     * @param transitionDuration CSS time for each in/out animation.
-     * @param transitionDelay    CSS time to wait between out-end and in-start.
-     * @private
-     */
-    _generateScript(totalPages, transition, transitionDuration, transitionDelay) {
-        return `
+    </style>
+</head>
+<body>
+  <div class="form-wrapper">
+    <h1>My Book App Form</h1>
+    <div class="progress-bar"><div class="progress-fill"></div></div>
+
+    <form id="multi-step-form">
+      <div class="form-pages-track">
+        
+    <div class="form-page" id="page-0" >
+      <h2>Personal Info</h2>
+      <p class="page-counter">Page 1 of 3</p>
+      
+      <div class="form-group">
+        <label for="first-name">First Name</label>
+        <input
+          type="text"
+          id="first-name"
+          name="first-name"
+          placeholder="First Name"
+          maxlength="50"
+          required
+        />
+        <small class="limit-hint">Max 50 characters</small>
+      </div>
+      <div class="form-group">
+        <label for="last-name">Last Name</label>
+        <input
+          type="text"
+          id="last-name"
+          name="last-name"
+          placeholder="Last Name"
+          maxlength="50"
+          required
+        />
+        <small class="limit-hint">Max 50 characters</small>
+      </div>
+      <div class="form-group">
+        <label for="age">Age</label>
+        <input
+          type="number"
+          id="age"
+          name="age"
+          placeholder="Age"
+          max="120"
+          
+        />
+        <small class="limit-hint">Max value: 120</small>
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          placeholder="Email"
+          maxlength="100"
+          required
+        />
+        <small class="limit-hint">Max 100 characters</small>
+      </div>
+      <div class="nav-buttons">
+        
+        <button type="button" class="btn-next" onclick="navigate(0,  1)">Next →</button>
+        
+      </div>
+    </div>
+    <div class="form-page" id="page-1" style="display:none">
+      <h2>Book Preferences</h2>
+      <p class="page-counter">Page 2 of 3</p>
+      
+      <div class="form-group">
+        <label for="favourite-genre">Favourite Genre</label>
+        <input
+          type="text"
+          id="favourite-genre"
+          name="favourite-genre"
+          placeholder="Favourite Genre"
+          maxlength="40"
+          
+        />
+        <small class="limit-hint">Max 40 characters</small>
+      </div>
+      <div class="form-group">
+        <label for="books-per-year">Books Per Year</label>
+        <input
+          type="number"
+          id="books-per-year"
+          name="books-per-year"
+          placeholder="Books Per Year"
+          max="999"
+          
+        />
+        <small class="limit-hint">Max value: 999</small>
+      </div>
+      <div class="form-group">
+        <label for="goodreads-url">Goodreads URL</label>
+        <input
+          type="url"
+          id="goodreads-url"
+          name="goodreads-url"
+          placeholder="Goodreads URL"
+          maxlength="200"
+          
+        />
+        <small class="limit-hint">Max 200 characters</small>
+      </div>
+      <div class="nav-buttons">
+        <button type="button" class="btn-prev" onclick="navigate(1, -1)">← Previous</button>
+        <button type="button" class="btn-next" onclick="navigate(1,  1)">Next →</button>
+        
+      </div>
+    </div>
+    <div class="form-page" id="page-2" style="display:none">
+      <h2>Account Setup</h2>
+      <p class="page-counter">Page 3 of 3</p>
+      
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          placeholder="Username"
+          maxlength="20"
+          required
+        />
+        <small class="limit-hint">Max 20 characters</small>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Password"
+          maxlength="64"
+          required
+        />
+        <small class="limit-hint">Max 64 characters</small>
+      </div>
+      <div class="nav-buttons">
+        <button type="button" class="btn-prev" onclick="navigate(2, -1)">← Previous</button>
+        
+        <button type="submit" class="btn-submit">Submit ✓</button>
+      </div>
+    </div>
+      </div>
+    </form>
+
+    <div class="success-message">
+      <h2>✅ Submitted!</h2>
+      <p>Thank you for completing the form.</p>
+    </div>
+  </div>
+  
     <script>
-      const totalPages         = ${totalPages};
-      const transitionType     = '${transition}';
-      const transitionDuration = '${transitionDuration}';
-      const transitionDelay    = '${transitionDelay}';
+      const totalPages         = 3;
+      const transitionType     = 'fade';
+      const transitionDuration = '0.4s';
+      const transitionDelay    = '0s';
 
       /** Convert a CSS time string ("0.4s" or "400ms") to milliseconds. */
       function cssTimeToMs(val) {
@@ -370,28 +399,6 @@ class FormGenerator {
       });
 
       updateProgress(0);
-    <\/script>`;
-    }
-    // ── Private: utilities ────────────────────────────────────────────────────
-    /**
-     * Converts a human-readable field name to a safe HTML id / name attribute.
-     * @private
-     */
-    _toId(name) {
-        return name
-            .toLowerCase()
-            .replace(/\s+/g, "-")
-            .replace(/[^a-z0-9-]/g, "");
-    }
-}
-exports.FormGenerator = FormGenerator;
-// ── Backward-compatible function exports ──────────────────────────────────────
-// index.ts (and any other callers) may import these directly without changes.
-/** @deprecated Use `ConfigLoader.load(filePath)` directly. */
-function loadConfig(filePath) {
-    return ConfigLoader_1.ConfigLoader.load(filePath);
-}
-/** @deprecated Use `new FormGenerator().generate(config)` directly. */
-function generateHTML(config) {
-    return new FormGenerator().generate(config);
-}
+    </script>
+</body>
+</html>
