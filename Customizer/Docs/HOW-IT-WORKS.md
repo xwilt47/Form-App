@@ -309,6 +309,123 @@ Pure CSS takes care of the rest — no animation library needed.
 
 ---
 
+## Compile & Build Flow (Form_Man)
+
+The **Customizer** runs entirely in the browser with plain JavaScript — nothing
+needs to be compiled. However, the **Form_Man** back-end generator is written in
+**TypeScript** and must be compiled before it can run.
+
+### Source layout
+
+Form_Man follows **MVC + OOP** — every file has one job.
+
+```
+Form_Man/
+├── package.json                   ← npm scripts (build / generate / start)
+├── tsconfig.json                  ← TypeScript compiler settings
+└── src/
+    ├── index.ts                   ← Entry point — just boots FormController
+    ├── types.ts                   ← Shared TypeScript interfaces / type definitions
+    ├── ConfigLoader.ts            ← Reads the JSON file & validates it
+    ├── formGenerator.ts           ← Backward-compatible façade / re-export hub
+    │
+    ├── models/
+    │   └── FormConfigModel.ts     ← Owns & exposes config data (the Model)
+    │
+    ├── views/
+    │   ├── FormView.ts            ← Assembles the full HTML document (top-level View)
+    │   ├── PageBuilder.ts         ← Renders one form page
+    │   ├── InputBuilder.ts        ← Renders one input field / textarea
+    │   ├── StyleBuilder.ts        ← Returns the inline <style> CSS block
+    │   └── ScriptBuilder.ts       ← Returns the inline <script> navigation block
+    │
+    ├── controllers/
+    │   └── FormController.ts      ← Orchestrates Model → View → write to disk
+    │
+    └── config/
+        └── form-config.json       ← The config file that drives everything
+```
+
+After compilation the TypeScript compiler (`tsc`) writes plain JavaScript into
+a sibling `dist/` folder that mirrors the `src/` structure:
+
+```
+dist/
+├── index.js
+├── types.js
+├── ConfigLoader.js
+├── formGenerator.js           ← façade
+├── models/
+│   └── FormConfigModel.js
+├── views/
+│   ├── FormView.js
+│   ├── PageBuilder.js
+│   ├── InputBuilder.js
+│   ├── StyleBuilder.js
+│   └── ScriptBuilder.js
+├── controllers/
+│   └── FormController.js
+└── config/
+    └── form-config.json       ← copied here by the copy-config script
+```
+
+### npm scripts
+
+| Script | Command | What it does |
+|---|---|---|
+| `build` | `tsc` | Compiles all `.ts` files in `src/` to `.js` files in `../dist/` |
+| `copy-config` | `node -e "…"` | Copies `src/config/form-config.json` into `dist/config/` so Node can find it at runtime |
+| `generate` | `build → copy-config → node ../dist/index.js` | Full pipeline — compiles, copies the config, then **runs** the generator |
+| `start` | same as `generate` | Alias for convenience |
+
+### Step-by-step compile flow
+
+```
+1. npm run generate
+        │
+        ▼
+2. tsc  (TypeScript compiler)
+   Reads tsconfig.json — compiles all src/**/*.ts → dist/**/*.js
+        │
+        ▼
+3. copy-config script
+   src/config/form-config.json  →  dist/config/form-config.json
+        │
+        ▼
+4. node ../dist/index.js
+   │
+   ├── new FormController(configPath, outputPath)
+   │         │
+   │         ├── new FormConfigModel(configPath)
+   │         │       └── ConfigLoader.load()  →  validates JSON
+   │         │
+   │         └── .run()
+   │               ├── model.toConfig()        →  raw FormConfig object
+   │               ├── FormView.render(config)
+   │               │     ├── StyleBuilder.build()           → CSS string
+   │               │     ├── PageBuilder.build() × N pages
+   │               │     │     └── InputBuilder.build() × M inputs
+   │               │     ├── ScriptBuilder.build()          → JS string
+   │               │     └── assembles full HTML document
+   │               └── fs.writeFileSync()     →  output/form.html
+        │
+        ▼
+5. output/form.html  ← final deliverable (open in any browser)
+```
+
+### TypeScript compiler settings explained
+
+| Setting | Value | Why |
+|---|---|---|
+| `target` | `es2016` | Compiled JS uses modern-but-safe syntax supported by current Node versions |
+| `module` | `commonjs` | Node.js uses `require()` / `module.exports` — this matches that |
+| `esModuleInterop` | `true` | Lets you `import fs from 'fs'` instead of the clunky `import * as fs` |
+| `strict` | `true` | Catches more bugs at compile time (null checks, missing types, etc.) |
+| `skipLibCheck` | `true` | Skips type-checking inside `node_modules` — speeds up the build |
+| `outDir` | `../dist` | Keeps compiled files out of the source folder |
+
+---
+
 ## Glossary for Beginners
 
 | Term | Plain-English meaning |
