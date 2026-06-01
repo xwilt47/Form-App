@@ -1,4 +1,5 @@
 import { InputConfig } from "../types";
+import { NameUtils }   from "../utils/NameUtils";
 
 /**
  * InputBuilder
@@ -11,7 +12,7 @@ export class InputBuilder {
    * @param input  A validated InputConfig object.
    */
   build(input: InputConfig): string {
-    const id          = this._toId(input.name);
+    const id          = NameUtils.toSnakeCase(input.name);
     const placeholder = input.placeholder ?? input.name;
     const required    = input.required ? "required" : "";
     const limitAttr   = input.type === "number"
@@ -50,18 +51,4 @@ export class InputBuilder {
         <small class="limit-hint">${hint}</small>
       </div>`;
   }
-
-  // ── Private ───────────────────────────────────────────────────────────────
-
-  /**
-   * Converts a human-readable field name to a safe HTML id / name attribute.
-   * @private
-   */
-  private _toId(name: string): string {
-    return name
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9-]/g, "");
-  }
 }
-

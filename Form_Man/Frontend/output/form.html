@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Book App Form</title>
+  
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        font-family: 'Segoe UI', sans-serif;
+        background: #f0f4f8;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .form-wrapper {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 520px;
+      }
+
+      h1 { font-size: 1.6rem; margin-bottom: 1.5rem; color: #1a1a2e; text-align: center; }
+      h2 { font-size: 1.2rem; margin-bottom: 0.25rem; color: #16213e; }
+
+      .page-counter { font-size: 0.8rem; color: #888; margin-bottom: 1.5rem; }
+
+      .progress-bar {
+        width: 100%;
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 3px;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        background: #4f46e5;
+        border-radius: 3px;
+        transition: width 0.3s ease;
+      }
+
+      .form-group { margin-bottom: 1.25rem; }
+      label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.35rem;
+      }
+
+      input, textarea {
+        width: 100%;
+        padding: 0.6rem 0.85rem;
+        border: 1.5px solid #d1d5db;
+        border-radius: 7px;
+        font-size: 0.95rem;
+        transition: border-color 0.2s;
+        outline: none;
+        color: #111;
+      }
+      input:focus, textarea:focus {
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+      }
+      textarea { resize: vertical; min-height: 90px; }
+
+      .limit-hint { font-size: 0.75rem; color: #9ca3af; margin-top: 0.25rem; display: block; }
+
+      .nav-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 1.75rem;
+        gap: 0.75rem;
+      }
+
+      button {
+        flex: 1;
+        padding: 0.65rem 1.25rem;
+        border: none;
+        border-radius: 7px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.1s;
+      }
+      button:active { transform: scale(0.98); }
+
+      .btn-next, .btn-submit { background: #4f46e5; color: #fff; }
+      .btn-next:hover, .btn-submit:hover { background: #4338ca; }
+      .btn-prev { background: #e5e7eb; color: #374151; }
+      .btn-prev:hover { background: #d1d5db; }
+
+      .success-message { text-align: center; padding: 2rem; display: none; }
+      .success-message h2 { color: #16a34a; font-size: 1.4rem; }
+      .success-message p  { color: #555; margin-top: 0.5rem; }
+
+      /* ── Transition base ── */
+      .form-pages-track { overflow: hidden; position: relative; }
+      .form-page {
+        animation-duration: 0.4s;
+        animation-fill-mode: both;
+        animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      /* ── Slide (horizontal) ── */
+      @keyframes slideInRight  { from { transform: translateX(110%);  opacity: 0; } to { transform: translateX(0);     opacity: 1; } }
+      @keyframes slideOutLeft  { from { transform: translateX(0);      opacity: 1; } to { transform: translateX(-110%); opacity: 0; } }
+      @keyframes slideInLeft   { from { transform: translateX(-110%);  opacity: 0; } to { transform: translateX(0);     opacity: 1; } }
+      @keyframes slideOutRight { from { transform: translateX(0);      opacity: 1; } to { transform: translateX(110%);  opacity: 0; } }
+      .slide-in-right  { animation-name: slideInRight; }
+      .slide-out-left  { animation-name: slideOutLeft;  pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
+      .slide-in-left   { animation-name: slideInLeft; }
+      .slide-out-right { animation-name: slideOutRight; pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
+
+      /* ── Fade ── */
+      @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+      .fade-in  { animation-name: fadeIn; }
+      .fade-out { animation-name: fadeOut; pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
+
+      /* ── Vertical ── */
+      @keyframes slideInDown  { from { transform: translateY(-110%); opacity: 0; } to { transform: translateY(0);     opacity: 1; } }
+      @keyframes slideOutUp   { from { transform: translateY(0);     opacity: 1; } to { transform: translateY(-110%); opacity: 0; } }
+      @keyframes slideInUp    { from { transform: translateY(110%);  opacity: 0; } to { transform: translateY(0);     opacity: 1; } }
+      @keyframes slideOutDown { from { transform: translateY(0);     opacity: 1; } to { transform: translateY(110%);  opacity: 0; } }
+      .slide-in-down  { animation-name: slideInDown; }
+      .slide-out-up   { animation-name: slideOutUp;   pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
+      .slide-in-up    { animation-name: slideInUp; }
+      .slide-out-down { animation-name: slideOutDown; pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
+
+      /* ── Result slide ── */
+      .result-header { text-align: center; margin-bottom: 1.75rem; }
+      .result-icon   { font-size: 3rem; line-height: 1; margin-bottom: 0.5rem; }
+      .result-header h2  { font-size: 1.3rem; color: #16a34a; margin-bottom: 0.25rem; }
+      .result-header p   { font-size: 0.85rem; color: #6b7280; }
+
+      .result-loading {
+        text-align: center;
+        color: #6b7280;
+        padding: 1.25rem 0;
+        font-size: 0.9rem;
+        letter-spacing: 0.02em;
+      }
+      .result-loading::before {
+        content: '';
+        display: inline-block;
+        width: 14px; height: 14px;
+        border: 2px solid #d1d5db;
+        border-top-color: #4f46e5;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        margin-right: 0.5rem;
+        vertical-align: middle;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      .result-error {
+        display: none;
+        background: #fef2f2;
+        border: 1px solid #fca5a5;
+        border-radius: 8px;
+        color: #b91c1c;
+        padding: 1rem 1.1rem;
+        font-size: 0.82rem;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        margin-bottom: 0.75rem;
+      }
+
+      .result-json-box { display: none; }
+      .result-json-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.4rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #374151;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .btn-copy-json {
+        background: #e5e7eb;
+        color: #374151;
+        border: none;
+        border-radius: 5px;
+        padding: 0.2rem 0.65rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+        flex: unset;
+      }
+      .btn-copy-json:hover { background: #d1d5db; }
+
+      .result-json {
+        background: #1e1e2e;
+        color: #cdd6f4;
+        padding: 1.1rem 1.25rem;
+        border-radius: 8px;
+        overflow-x: auto;
+        font-family: 'Consolas', 'Fira Code', monospace;
+        font-size: 0.78rem;
+        line-height: 1.65;
+        white-space: pre;
+        margin: 0;
+      }
+
+      /* ── Zoom ── */
+      @keyframes zoomIn      { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1);    opacity: 1; } }
+      @keyframes zoomOut     { from { transform: scale(1);    opacity: 1; } to { transform: scale(1.1);  opacity: 0; } }
+      @keyframes zoomInBack  { from { transform: scale(1.1);  opacity: 0; } to { transform: scale(1);    opacity: 1; } }
+      @keyframes zoomOutBack { from { transform: scale(1);    opacity: 1; } to { transform: scale(0.85); opacity: 0; } }
+      .zoom-in       { animation-name: zoomIn; }
+      .zoom-out      { animation-name: zoomOut;     pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
+      .zoom-in-back  { animation-name: zoomInBack; }
+      .zoom-out-back { animation-name: zoomOutBack; pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
+    </style>
+</head>
+<body>
+  <div class="form-wrapper">
+    <h1>My Book App Form</h1>
+    <div class="progress-bar"><div class="progress-fill"></div></div>
+
+    <form id="multi-step-form">
+      <div class="form-pages-track">
+        
+    <div class="form-page" id="page-0" >
+      <h2>Personal Info</h2>
+      <p class="page-counter">Page 1 of 3</p>
+      
+      <div class="form-group">
+        <label for="first_name">First Name</label>
+        <input
+          type="text"
+          id="first_name"
+          name="first_name"
+          placeholder="First Name"
+          maxlength="50"
+          required
+        />
+        <small class="limit-hint">Max 50 characters</small>
+      </div>
+      <div class="form-group">
+        <label for="last_name">Last Name</label>
+        <input
+          type="text"
+          id="last_name"
+          name="last_name"
+          placeholder="Last Name"
+          maxlength="50"
+          required
+        />
+        <small class="limit-hint">Max 50 characters</small>
+      </div>
+      <div class="form-group">
+        <label for="age">Age</label>
+        <input
+          type="number"
+          id="age"
+          name="age"
+          placeholder="Age"
+          max="120"
+          
+        />
+        <small class="limit-hint">Max value: 120</small>
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          placeholder="Email"
+          maxlength="100"
+          required
+        />
+        <small class="limit-hint">Max 100 characters</small>
+      </div>
+      <div class="nav-buttons">
+        
+        <button type="button" class="btn-next" onclick="navigate(0,  1)">Next →</button>
+        
+      </div>
+    </div>
+    <div class="form-page" id="page-1" style="display:none">
+      <h2>Book Preferences</h2>
+      <p class="page-counter">Page 2 of 3</p>
+      
+      <div class="form-group">
+        <label for="favourite_genre">Favourite Genre</label>
+        <input
+          type="text"
+          id="favourite_genre"
+          name="favourite_genre"
+          placeholder="Favourite Genre"
+          maxlength="40"
+          
+        />
+        <small class="limit-hint">Max 40 characters</small>
+      </div>
+      <div class="form-group">
+        <label for="books_per_year">Books Per Year</label>
+        <input
+          type="number"
+          id="books_per_year"
+          name="books_per_year"
+          placeholder="Books Per Year"
+          max="999"
+          
+        />
+        <small class="limit-hint">Max value: 999</small>
+      </div>
+      <div class="form-group">
+        <label for="goodreads_url">Goodreads URL</label>
+        <input
+          type="url"
+          id="goodreads_url"
+          name="goodreads_url"
+          placeholder="Goodreads URL"
+          maxlength="200"
+          
+        />
+        <small class="limit-hint">Max 200 characters</small>
+      </div>
+      <div class="nav-buttons">
+        <button type="button" class="btn-prev" onclick="navigate(1, -1)">← Previous</button>
+        <button type="button" class="btn-next" onclick="navigate(1,  1)">Next →</button>
+        
+      </div>
+    </div>
+    <div class="form-page" id="page-2" style="display:none">
+      <h2>Account Setup</h2>
+      <p class="page-counter">Page 3 of 3</p>
+      
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          placeholder="Username"
+          maxlength="20"
+          required
+        />
+        <small class="limit-hint">Max 20 characters</small>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Password"
+          maxlength="64"
+          required
+        />
+        <small class="limit-hint">Max 64 characters</small>
+      </div>
+      <div class="nav-buttons">
+        <button type="button" class="btn-prev" onclick="navigate(2, -1)">← Previous</button>
+        
+        <button type="submit" class="btn-submit">Submit ✓</button>
+      </div>
+    </div>
+
+        <!-- Result slide: animated in after submit, shows the API JSON response -->
+        <div class="form-page" id="page-result" style="display:none">
+          <div class="result-header">
+            <div class="result-icon">✅</div>
+            <h2>Submitted!</h2>
+            <p>Sending your response to the API…</p>
+          </div>
+          <div class="result-loading">Waiting for API response</div>
+          <div class="result-error"></div>
+          <div class="result-json-box">
+            <div class="result-json-label">
+              <span>API Response</span>
+              <button type="button" class="btn-copy-json" onclick="copyJson()">📋 Copy</button>
+            </div>
+            <pre class="result-json"></pre>
+          </div>
+        </div>
+
+      </div>
+    </form>
+  </div>
+  
+    <script>
+      const totalPages         = 3;
+      const transitionType     = 'zoom';
+      const transitionDuration = '0.4s';
+      const transitionDelay    = '0s';
+      const API_URL            = 'http://localhost:8000';
+      const PAGE_MODELS        = [{"model":"personal_info","fields":["first_name","last_name","age","email"]},{"model":"book_preferences","fields":["favourite_genre","books_per_year","goodreads_url"]},{"model":"account_setup","fields":["username","password"]}];
+
+      // ── Helpers ────────────────────────────────────────────────────────────
+
+      /** Convert a CSS time string ("0.4s" or "400ms") to milliseconds. */
+      function cssTimeToMs(val) {
+        if (!val) return 0;
+        const n = parseFloat(val);
+        return val.trim().endsWith('ms') ? n : n * 1000;
+      }
+
+      function getClasses(direction) {
+        switch (transitionType) {
+          case 'fade':
+            return { out: 'fade-out', in: 'fade-in' };
+          case 'vertical':
+            return direction === 1
+              ? { out: 'slide-out-up',   in: 'slide-in-down' }
+              : { out: 'slide-out-down', in: 'slide-in-up'   };
+          case 'zoom':
+            return direction === 1
+              ? { out: 'zoom-out',      in: 'zoom-in'      }
+              : { out: 'zoom-out-back', in: 'zoom-in-back' };
+          default: // slide
+            return direction === 1
+              ? { out: 'slide-out-left',  in: 'slide-in-right' }
+              : { out: 'slide-out-right', in: 'slide-in-left'  };
+        }
+      }
+
+      function updateProgress(pct) {
+        document.querySelector('.progress-fill').style.width = pct + '%';
+      }
+
+      // ── Page navigation ────────────────────────────────────────────────────
+
+      function navigate(currentIndex, direction) {
+        const current = document.getElementById('page-' + currentIndex);
+
+        if (direction === 1) {
+          const inputs = current.querySelectorAll('input[required], textarea[required]');
+          for (const input of inputs) {
+            if (!input.value.trim()) {
+              input.focus();
+              input.style.borderColor = '#ef4444';
+              setTimeout(() => input.style.borderColor = '', 1500);
+              return;
+            }
+          }
+        }
+
+        const next    = document.getElementById('page-' + (currentIndex + direction));
+        const classes = getClasses(direction);
+        const delayMs = cssTimeToMs(transitionDelay);
+
+        const track = current.closest('.form-pages-track');
+        track.style.minHeight = current.offsetHeight + 'px';
+
+        current.style.animationDuration = transitionDuration;
+        next.style.animationDuration    = transitionDuration;
+
+        current.classList.add(classes.out);
+        current.addEventListener('animationend', () => {
+          current.style.display = 'none';
+          current.classList.remove(classes.out);
+          setTimeout(() => {
+            next.style.display = 'block';
+            next.classList.add(classes.in);
+            next.addEventListener('animationend', () => {
+              next.classList.remove(classes.in);
+              track.style.minHeight = next.offsetHeight + 'px';
+            }, { once: true });
+          }, delayMs);
+        }, { once: true });
+
+        const newIndex = currentIndex + direction;
+        updateProgress(((newIndex + 1) / totalPages) * 100);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      // ── Submit → result slide ──────────────────────────────────────────────
+
+      document.getElementById('multi-step-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const lastPage   = document.getElementById('page-' + (totalPages - 1));
+        const resultPage = document.getElementById('page-result');
+        const classes    = getClasses(1);
+        const delayMs    = cssTimeToMs(transitionDelay);
+        const track      = lastPage.closest('.form-pages-track');
+
+        // Collect flat form data
+        const flat = Object.fromEntries(new FormData(e.target).entries());
+
+        // Build nested FullSubmission body matching Python model structure
+        const body = {};
+        PAGE_MODELS.forEach(({ model, fields }) => {
+          body[model] = {};
+          fields.forEach(field => {
+            if (flat[field] !== undefined) body[model][field] = flat[field];
+          });
+        });
+
+        // ── Animate last form page → result slide ──────────────────────────
+        updateProgress(100);
+        track.style.minHeight = lastPage.offsetHeight + 'px';
+
+        lastPage.style.animationDuration  = transitionDuration;
+        resultPage.style.animationDuration = transitionDuration;
+
+        lastPage.classList.add(classes.out);
+        lastPage.addEventListener('animationend', () => {
+          lastPage.style.display = 'none';
+          lastPage.classList.remove(classes.out);
+
+          // Hide the progress bar once on the result slide
+          document.querySelector('.progress-bar').style.display = 'none';
+
+          setTimeout(() => {
+            resultPage.style.display = 'block';
+            resultPage.classList.add(classes.in);
+            resultPage.addEventListener('animationend', () => {
+              resultPage.classList.remove(classes.in);
+              track.style.minHeight = resultPage.offsetHeight + 'px';
+            }, { once: true });
+          }, delayMs);
+        }, { once: true });
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // ── POST to API ────────────────────────────────────────────────────
+        try {
+          const res  = await fetch(API_URL + '/submit', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(body),
+          });
+          const json = await res.json();
+
+          document.querySelector('.result-loading').style.display  = 'none';
+          document.querySelector('.result-json-box').style.display = 'block';
+          document.querySelector('.result-json').textContent = JSON.stringify(json, null, 2);
+
+          // Re-lock height after content is revealed
+          setTimeout(() => {
+            track.style.minHeight = resultPage.offsetHeight + 'px';
+          }, 60);
+
+        } catch (err) {
+          document.querySelector('.result-loading').style.display = 'none';
+          const errEl = document.querySelector('.result-error');
+          errEl.textContent = '⚠️  Could not reach the API at ' + API_URL +
+            '.\nMake sure the Python server is running:\n    python api.py';
+          errEl.style.display = 'block';
+          setTimeout(() => {
+            track.style.minHeight = resultPage.offsetHeight + 'px';
+          }, 60);
+        }
+      });
+
+      // ── Copy JSON button ───────────────────────────────────────────────────
+      function copyJson() {
+        const text = document.querySelector('.result-json').textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          const btn = document.querySelector('.btn-copy-json');
+          btn.textContent = '✅ Copied!';
+          setTimeout(() => btn.textContent = '📋 Copy', 2000);
+        });
+      }
+
+      // ── Init ───────────────────────────────────────────────────────────────
+      updateProgress(((0 + 1) / totalPages) * 100);
+    </script>
+</body>
+</html>

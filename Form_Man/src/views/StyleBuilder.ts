@@ -141,6 +141,90 @@ export class StyleBuilder {
       .slide-in-up    { animation-name: slideInUp; }
       .slide-out-down { animation-name: slideOutDown; pointer-events: none; position: absolute; top: 0; left: 0; width: 100%; }
 
+      /* ── Result slide ── */
+      .result-header { text-align: center; margin-bottom: 1.75rem; }
+      .result-icon   { font-size: 3rem; line-height: 1; margin-bottom: 0.5rem; }
+      .result-header h2  { font-size: 1.3rem; color: #16a34a; margin-bottom: 0.25rem; }
+      .result-header p   { font-size: 0.85rem; color: #6b7280; }
+
+      .result-loading {
+        text-align: center;
+        color: #6b7280;
+        padding: 1.25rem 0;
+        font-size: 0.9rem;
+        letter-spacing: 0.02em;
+      }
+      .result-loading::before {
+        content: '';
+        display: inline-block;
+        width: 14px; height: 14px;
+        border: 2px solid #d1d5db;
+        border-top-color: #4f46e5;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        margin-right: 0.5rem;
+        vertical-align: middle;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      .result-error {
+        display: none;
+        background: #fef2f2;
+        border: 1px solid #fca5a5;
+        border-radius: 8px;
+        color: #b91c1c;
+        padding: 1rem 1.1rem;
+        font-size: 0.82rem;
+        line-height: 1.8;
+        margin-bottom: 0.75rem;
+      }
+      .result-error code {
+        background: #fee2e2;
+        border-radius: 3px;
+        padding: 0.1rem 0.35rem;
+        font-family: 'Consolas', monospace;
+        font-size: 0.8rem;
+      }
+
+      .result-json-box { display: none; }
+      .result-json-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.4rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #374151;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .btn-copy-json {
+        background: #e5e7eb;
+        color: #374151;
+        border: none;
+        border-radius: 5px;
+        padding: 0.2rem 0.65rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+        flex: unset;
+      }
+      .btn-copy-json:hover { background: #d1d5db; }
+
+      .result-json {
+        background: #1e1e2e;
+        color: #cdd6f4;
+        padding: 1.1rem 1.25rem;
+        border-radius: 8px;
+        overflow-x: auto;
+        font-family: 'Consolas', 'Fira Code', monospace;
+        font-size: 0.78rem;
+        line-height: 1.65;
+        white-space: pre;
+        margin: 0;
+      }
+
       /* ── Zoom ── */
       @keyframes zoomIn      { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1);    opacity: 1; } }
       @keyframes zoomOut     { from { transform: scale(1);    opacity: 1; } to { transform: scale(1.1);  opacity: 0; } }

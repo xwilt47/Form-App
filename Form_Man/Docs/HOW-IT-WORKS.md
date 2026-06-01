@@ -35,7 +35,7 @@ Form_Man/
 ├── package.json                   ← npm scripts and dependencies
 ├── tsconfig.json                  ← TypeScript compiler settings
 └── src/
-    ├── index.ts                   ← Entry point — boots FormController
+    ├── index.ts                   ← Entry point — boots FormController + ApiController
     ├── ConfigLoader.ts            ← Reads form-config.json from disk
     │
     ├── types/                     ← TypeScript type definitions
@@ -55,10 +55,12 @@ Form_Man/
     │   ├── PageBuilder.ts         ← Renders one form page
     │   ├── InputBuilder.ts        ← Renders one input field / textarea
     │   ├── StyleBuilder.ts        ← Builds the inline <style> CSS block
-    │   └── ScriptBuilder.ts       ← Builds the inline <script> JS block
+    │   ├── ScriptBuilder.ts       ← Builds the inline <script> JS block
+    │   └── PythonApiBuilder.ts    ← Generates a FastAPI Python source file
     │
     ├── controllers/
-    │   └── FormController.ts      ← Orchestrates Model → View → write to disk
+    │   ├── FormController.ts      ← Orchestrates Model → FormView → form.html
+    │   └── ApiController.ts       ← Orchestrates Model → PythonApiBuilder → api.py
     │
     └── config/
         └── form-config.json       ← The config file that drives everything
@@ -96,7 +98,8 @@ It must be **compiled** to plain JavaScript first.
         ▼
 4. node dist/index.js
    │
-   ├── new FormController(configPath, outputPath)
+   ├── ── Pipeline 1: HTML Form ──────────────────────────────────────────
+   │   new FormController(configPath, formOutputPath)
    │         │
    │         ├── new FormConfigModel(configPath)
    │         │       └── ConfigLoader.load()
@@ -110,10 +113,25 @@ It must be **compiled** to plain JavaScript first.
    │               │     │     └── InputBuilder.build() × M inputs
    │               │     ├── ScriptBuilder.build()             → JS string
    │               │     └── assembles full HTML document string
-   │               └── fs.writeFileSync()        →  output/form.html
+   │               └── fs.writeFileSync()        →  Frontend/output/form.html
+   │
+   └── ── Pipeline 2: Python API ─────────────────────────────────────────
+       new ApiController(configPath, apiOutputPath)
+             │
+             ├── new FormConfigModel(configPath)   ← same config, re-loaded
+             │
+             └── .run()
+                   ├── PythonApiBuilder.build(config)
+                   │     ├── _buildPageModel() × N pages → Pydantic classes
+                   │     ├── _buildFullModel()            → FullSubmission class
+                   │     ├── _buildSchemaData()           → FORM_SCHEMA dict
+                   │     └── _buildRoutes()               → FastAPI route handlers
+                   └── fs.writeFileSync()        →  Frontend/output/api.py
         │
         ▼
-5. Frontend/output/form.html  ← open in any browser
+5a. Frontend/output/form.html  ← open in any browser
+5b. Frontend/output/api.py     ← run with: python api.py
+                                  then open: http://localhost:8000/docs
 ```
 
 ### TypeScript compiler settings (`tsconfig.json`)
@@ -318,20 +336,75 @@ Passing a different view in makes the controller testable without touching the f
 
 ---
 
+### `PythonApiBuilder.ts` — the Python API
+
+Returns a complete, standalone **FastAPI** Python source file as a string.
+
+**Why FastAPI?**
+FastAPI automatically generates an interactive **Swagger UI** at `/docs` when you
+run the server — that's JSON in the browser, with no extra work.
+
+What the generated `api.py` contains:
+
+| Section | What it is |
+|---|---|
+| **Pydantic models** | One `BaseModel` class per form page — field names are snake_cased, types are mapped from the config, limits become `max_length` / `le` validators, required fields use `Field(...)` |
+| **`FullSubmission`** | A combined model with one sub-model per page — used for the full-form POST endpoint |
+| **`FORM_SCHEMA`** | A Python dict that mirrors `form-config.json` — served by the GET schema/pages endpoints |
+| **Routes** | `GET /`, `GET /schema`, `GET /pages`, `GET /pages/{index}`, `POST /submit`, `POST /submit/{index}` |
+| **CORS middleware** | Allows the generated `form.html` to call the API from the browser |
+| **Entry point** | `uvicorn.run(...)` so `python api.py` starts the server directly |
+
+**Input type → Python type mapping:**
+
+| Form type | Python / Pydantic type |
+|---|---|
+| `text`, `password`, `tel`, `date`, `textarea` | `str` |
+| `email` | `EmailStr` (validated by Pydantic) |
+| `number` | `int` (with `le=limit`) |
+| `url` | `AnyUrl` (validated by Pydantic) |
+
+---
+
+## The ApiController — `src/controllers/ApiController.ts`
+
+Mirrors `FormController` exactly — same pattern, different output.
+
+```
+ApiController(configPath, outputPath, builder?)
+  │
+  └── .run()
+        │
+        ├── 1. new FormConfigModel(configPath)   ← load + validate
+        │
+        ├── 2. builder.build(model.toConfig())   ← generate Python source string
+        │
+        └── 3. fs.writeFileSync(outputPath, src) ← write api.py to disk
+                Logs: output path + install/run instructions
+```
+
+The `builder` parameter defaults to `new PythonApiBuilder()` but can be
+swapped for testing without touching the file system.
+
+---
+
 ## The Entry Point — `src/index.ts`
 
 ```typescript
 import * as path from "path";
 import { FormController } from "./controllers/FormController";
+import { ApiController }  from "./controllers/ApiController";
 
 const CONFIG_PATH = path.resolve(__dirname, "config/form-config.json");
-const OUTPUT_PATH = path.resolve(__dirname, "../Frontend/output/form.html");
+const FORM_OUTPUT = path.resolve(__dirname, "../Frontend/output/form.html");
+const API_OUTPUT  = path.resolve(__dirname, "../Frontend/output/api.py");
 
-new FormController(CONFIG_PATH, OUTPUT_PATH).run();
+new FormController(CONFIG_PATH, FORM_OUTPUT).run();
+new ApiController(CONFIG_PATH, API_OUTPUT).run();
 ```
 
-That's it — four lines. The entry point does nothing itself. It just resolves
-the two file paths and hands them to the controller.
+The entry point runs both controllers in sequence. Each controller independently
+loads the config, builds its output, and writes to disk.
 
 `__dirname` is a Node.js built-in that means "the folder this file is in".
 Using `path.resolve(__dirname, "…")` means the paths always work regardless
@@ -350,25 +423,23 @@ ConfigLoader  →  ConfigValidator  →  validated FormConfig object
                                               ▼
                                       FormConfigModel
                                               │  (toConfig())
-                                              ▼
-                                       FormController
-                                              │  (passes config to)
-                                              ▼
-                                          FormView
-                                    ┌────────┼────────┐
-                                    ▼        ▼        ▼
-                               StyleBuilder  ScriptBuilder
-                                         PageBuilder
-                                            │
-                                            ▼
-                                      InputBuilder
-                                            │
-                               (all strings assembled into)
-                                            ▼
-                                   complete HTML string
-                                            │  (written by)
-                                            ▼
-                               Frontend/output/form.html
+                                    ┌─────────┴──────────┐
+                                    ▼                    ▼
+                             FormController        ApiController
+                                    │                    │
+                                    ▼                    ▼
+                                FormView         PythonApiBuilder
+                          ┌───────┼───────┐
+                          ▼       ▼       ▼
+                     StyleBuilder  ScriptBuilder
+                              PageBuilder
+                                  │
+                                  ▼
+                            InputBuilder
+                                  │
+                     (assembled into)          (assembled into)
+                          ▼                         ▼
+               Frontend/output/form.html   Frontend/output/api.py
 ```
 
 ---

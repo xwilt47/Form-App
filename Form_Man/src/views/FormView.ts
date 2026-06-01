@@ -1,7 +1,8 @@
 import { FormConfig } from "../types";
+import { NameUtils }     from "../utils/NameUtils";
 import { PageBuilder }   from "./PageBuilder";
 import { StyleBuilder }  from "./StyleBuilder";
-import { ScriptBuilder } from "./ScriptBuilder";
+import { ScriptBuilder, PageSchema } from "./ScriptBuilder";
 
 /**
  * FormView
@@ -41,12 +42,19 @@ export class FormView {
       .map((page, i) => this._pageBuilder.build(page, i, config.pages.length))
       .join("");
 
+    // Compute page schemas so the script can build the nested POST body
+    const pageSchemas: PageSchema[] = config.pages.map(page => ({
+      model:  NameUtils.toSnakeCase(page.pageTitle),
+      fields: page.inputs.map(inp => NameUtils.toSnakeCase(inp.name)),
+    }));
+
     const styles = this._styleBuilder.build();
     const script = this._scriptBuilder.build(
       config.pages.length,
       transition,
       transitionDuration,
       transitionDelay,
+      pageSchemas,
     );
 
     return `<!DOCTYPE html>
@@ -62,20 +70,33 @@ export class FormView {
     <h1>${config.formTitle}</h1>
     <div class="progress-bar"><div class="progress-fill"></div></div>
 
-    <form id="multi-step-form">
+    <form id="multi-step-form" novalidate>
       <div class="form-pages-track">
         ${pagesHtml}
+
+        <!-- Result slide: animated in after submit, shows the API JSON response -->
+        <div class="form-page" id="page-result" style="display:none">
+          <div class="result-header">
+            <div class="result-icon">✅</div>
+            <h2>Submitted!</h2>
+            <p>Sending your response to the API…</p>
+          </div>
+          <div class="result-loading">Waiting for API response</div>
+          <div class="result-error"></div>
+          <div class="result-json-box">
+            <div class="result-json-label">
+              <span>API Response</span>
+              <button type="button" class="btn-copy-json" onclick="copyJson()">📋 Copy</button>
+            </div>
+            <pre class="result-json"></pre>
+          </div>
+        </div>
+
       </div>
     </form>
-
-    <div class="success-message">
-      <h2>✅ Submitted!</h2>
-      <p>Thank you for completing the form.</p>
-    </div>
   </div>
   ${script}
 </body>
 </html>`;
   }
 }
-

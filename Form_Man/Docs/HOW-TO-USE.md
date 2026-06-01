@@ -175,13 +175,77 @@ Run these from inside the `Form_Man` folder:
 
 ## Where Does the Output Go?
 
-The finished HTML file is saved to:
+`npm start` produces **two files**:
+
+| File | What it is |
+|---|---|
+| `Frontend/output/form.html` | The multi-step HTML form — open in any browser |
+| `Frontend/output/api.py` | A ready-to-run FastAPI Python server |
+
+---
+
+## Running the Python API
+
+The generated `api.py` is a full REST API server.  When the form is submitted
+it **automatically calls the API** and slides the JSON response into view — the
+same animation as the page transitions.
+
+### 1 — Install Python dependencies (once only)
+
+```bash
+pip install fastapi "uvicorn[standard]" pydantic[email]
+```
+
+### 2 — Start the server
+
+```bash
+python api.py
+```
+
+You'll see:
 
 ```
-Frontend/output/form.html
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ```
 
-Just double-click that file to open it in your browser.
+### 3 — Fill in and submit the form
+
+Open `Frontend/output/form.html` in your browser, fill in every page, then click
+**Submit ✓**.  The form will:
+
+1. Animate the last page out using your configured transition.
+2. Slide in the **Result** screen.
+3. POST your answers to `http://localhost:8000/submit`.
+4. Display the full JSON response from the API in a dark code box.
+5. Show a **📋 Copy** button to copy the JSON to your clipboard.
+
+> ⚠️ If the Python server is **not** running when you submit, the result slide
+> still appears but shows an error message telling you to start `python api.py`.
+
+### 4 — Explore the API directly in browser
+
+| URL | What you get |
+|---|---|
+| `http://localhost:8000/docs` | **Swagger UI** — interactive JSON explorer, try every endpoint |
+| `http://localhost:8000/redoc` | **ReDoc** — clean read-only API reference |
+| `http://localhost:8000/` | Form metadata as JSON |
+| `http://localhost:8000/schema` | Full form schema as JSON |
+| `http://localhost:8000/pages` | All pages and fields as JSON |
+| `http://localhost:8000/pages/0` | Just page 1 as JSON |
+
+### Available endpoints
+
+| Method | Path | What it does |
+|---|---|---|
+| `GET` | `/` | Form title and page count |
+| `GET` | `/schema` | Full schema matching `form-config.json` |
+| `GET` | `/pages` | Array of all page schemas |
+| `GET` | `/pages/{index}` | One page schema (0 = first page) |
+| `POST` | `/submit` | Submit the entire form at once |
+| `POST` | `/submit/{index}` | Submit one page (0 = first page) |
+
+> 💡 **Tip:** The Swagger UI at `/docs` lets you fill in and POST data directly
+> in the browser — no extra tools needed.
 
 ---
 
@@ -196,6 +260,10 @@ Just double-click that file to open it in your browser.
 | `limit must be a positive number` | Every input needs a `limit` greater than 0 |
 | Form generates but looks plain | Check that `style` settings are in your config |
 | TypeScript errors on `npm start` | Run `npm install` first — the compiler may be missing |
+| `python api.py` not found | Run `pip install fastapi "uvicorn[standard]" pydantic[email]` first |
+| `ModuleNotFoundError: No module named 'fastapi'` | Same as above — pip install the dependencies |
+| `Address already in use` on port 8000 | Another process is using port 8000. Stop it or change the port in `api.py` |
+| POST /submit returns 422 | A required field is missing or a value exceeds the limit |
 
 ---
 
